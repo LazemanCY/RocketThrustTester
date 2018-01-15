@@ -99,7 +99,7 @@ void loop()
   long forceRead = 0;		//unit in g
   uint8_t force_pixel;
   uint16_t Thrust[100];//0.01N
-  uint32_t impulse;
+  uint32_t impulse = 0;
   uint16_t maxForce = 0;
   uint16_t avgForce;
   uint8_t maxForceTime = 0;
@@ -112,7 +112,7 @@ void loop()
   do{
     forceRead = HX711_CH0.Get_Weight();
     delay(25);
-  }while( forceRead < 5 );//too small will make the system irritability, it could be larger
+  }while( forceRead < 10 );//too small will make the system irritability, it could be larger
   
   //get 100 samples in 2 seconds
   while(i < 100)
@@ -138,11 +138,12 @@ void loop()
   
   if(!burnTime)//if motor works more than 2s, burn time is assigned to calculate avr thrust
     burnTime = 100;
+    
+  avgForce = impulse/burnTime; //get average force before normalizing
   
-  maxForceTime *= 2;
-  avgForce = impulse/burnTime;
+  impulse /= 50;//50 samples in one second
+  maxForceTime *= 2;//ticks every 0.02s, 10th tick is 0.2s
   burnTime *= 2;
-  impulse /= 50;
   
   /*
   for(i=0;i<100;i++)
@@ -233,7 +234,7 @@ void loop()
     {
       for(j=0;j<10;j++) 
       {
-        u8g2.drawStr(i*25+6,5+j*6,u8g2_u16toa(Thrust[i*10+j+50],4));
+        u8g2.drawStr(i*25+6,6+j*6,u8g2_u16toa(Thrust[i*10+j+50],4));
       }      
     }
     u8g2.sendBuffer();
