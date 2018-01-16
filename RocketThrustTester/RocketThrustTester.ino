@@ -32,6 +32,14 @@ HX711 HX711_CH0(2, 3, 670); //SCK,DT,GapValue
 
 unsigned long previous_millis_sample =0;
 
+uint16_t Thrust[100];//0.01N
+uint32_t impulse = 0;
+uint16_t maxForce = 0;
+uint16_t avgForce;
+uint8_t maxForceTime = 0;
+uint8_t burnTime = 0;
+long forceRead = 0;		//unit in g
+
 //add decimal point '.' to a u16 num in 1/100 scale
 //eg: 3365 will be 33.65
 const char *u16toftp(char * dest, uint16_t v)
@@ -71,9 +79,31 @@ void setup()
   
   pinMode(KEY, INPUT);
   digitalWrite(KEY, INPUT_PULLUP);
-
-  Serial.begin(9600);
-  //Serial.print("Welcome to use!\n");
+  delay(100);
+  
+  //Serial.begin(9600);//disable serial could save some ram
+/*
+  
+  
+  //power-up while key down, it'll enter scale mode for calibration
+  if(digitalRead(KEY) == LOW)
+  {
+    u8g2.clearBuffer();
+    u8g2.setFont(FONT_BIG);
+    u8g2.drawStr(7,32,"Serial Scale");
+    u8g2.sendBuffer();
+    HX711_CH0.begin();
+    delay(3000);
+    HX711_CH0.begin();		
+    //push button could jump out the serial scale
+    while(digitalRead(KEY) == HIGH){
+      forceRead = HX711_CH0.Get_Weight();
+      Serial.print(forceRead);
+      Serial.println(" g");
+      delay(500);  
+    }
+  }
+  */
   
   u8g2.clearBuffer();
   u8g2.setFont(FONT_BIG);
@@ -96,19 +126,12 @@ void loop()
   uint8_t count = 0;
   uint8_t screen = 0;
   uint8_t x ,y;
-  long forceRead = 0;		//unit in g
   uint8_t force_pixel;
-  uint16_t Thrust[100];//0.01N
-  uint32_t impulse = 0;
-  uint16_t maxForce = 0;
-  uint16_t avgForce;
-  uint8_t maxForceTime = 0;
-  uint8_t burnTime = 0;
   uint32_t temp_32b;
   
   unsigned long currentMillis;
   
-  //wait until thrust is larger than 5g
+  //wait until thrust is larger than 10g
   do{
     forceRead = HX711_CH0.Get_Weight();
     delay(25);
@@ -122,13 +145,14 @@ void loop()
     {
       previous_millis_sample += sample_cycle;
       forceRead = HX711_CH0.Get_Weight();
+      if(forceRead < 0) forceRead = 0;
       Thrust[i] = (uint16_t)(forceRead * 98 / 100);//convert g to N
       if(Thrust[i] > maxForce){
         maxForce = Thrust[i];
         maxForceTime = i;//in 0.02s step
       }
       //thrust drops under 5g indicates motor nearly stop
-      if((forceRead <5)&&(!burnTime)){
+      if((forceRead < 5)&&(!burnTime)){
         burnTime = i;//in 0.02s step
       }
       impulse += Thrust[i];
@@ -154,7 +178,7 @@ void loop()
   //*/
   
   //After one measurement, go to screen loop and never jump out.
-  //if a new measurement is desired, please push the reset button... 
+  //if a new measurement is desired, just push the reset button... 
   while(1){
     //----------Thrust Curve----------
     //The first page shows the force/time curve
