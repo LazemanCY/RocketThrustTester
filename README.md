@@ -16,4 +16,14 @@ The weight sensor I used has a measure range of 3kg.<br />
 Nano plays the whole thing which is a bit overwhelming for its tiny body.<br />
 LCD library tokes up most of the RAM and about 300 Bytes are left for other features.<br />
 
+## Wiring
+All of them are powered by ArduinoNano's onboard rectifier. A 7.4V Li-Po is connected to Vin.<br />
+I made a box for the lcd and Arduino and mounted it on a board.<br />
+
 ## How to Use
+Prepare everything and then power-up, it starts to get the zero point. <br />
+After 3 seconds, lcd will show "Ready to Go!" which means a thrust bigger than 10g will trigger the system to collect data.<br />
+It's sampling rate is 50Hz and a total 100 data points will be recorded in 2 seconds.<br />
+When the measurement is finished, you will see a thrust curve. Push the button could jump to statistical data. <br />
+Last two pages show the raw data for looking over.<br />
+For ATmega328p limited storage space, a mega or serial port could be used for a longer record demand.<br />
