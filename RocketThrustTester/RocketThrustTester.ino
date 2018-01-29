@@ -151,17 +151,14 @@ void loop()
         maxForce = Thrust[i];
         maxForceTime = i;//in 0.02s step
       }
-      //thrust drops under 5g indicates motor nearly stop
-      if((forceRead < 5)&&(!burnTime)){
-        burnTime = i;//in 0.02s step
-      }
+      //accumulate burn time for thrust > 5
+      if(forceRead > 5)
+        burnTime++;
+      
       impulse += Thrust[i];
       i++;
     }
   }
-  
-  if(!burnTime)//if motor works more than 2s, burn time is assigned to calculate avr thrust
-    burnTime = 100;
     
   avgForce = impulse/burnTime; //get average force before normalizing
   
