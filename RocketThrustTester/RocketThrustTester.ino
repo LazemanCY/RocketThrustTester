@@ -7,8 +7,6 @@
 #define FONT_MED    u8g2_font_profont12_mf 
 #define FONT_SMALL  u8g2_font_4x6_mf 
 
-#define sample_cycle    20 //50Hz
-
 //Drawing
 #define zero_point_x 10
 #define zero_point_y 57
@@ -30,14 +28,18 @@ HX711 HX711_CH0(2, 3, 670); //SCK,DT,GapValue
 
 #define KEY  4
 
-unsigned long previous_millis_sample =0;
+unsigned long previous_millis_sample = 0;
+
+uint8_t sample_cycle = 20;
+uint8_t sample_rate = 50;
+uint8_t time_scale = 2;
 
 uint16_t Thrust[100];//0.01N
 uint32_t impulse = 0;
 uint16_t maxForce = 0;
 uint16_t avgForce;
-uint8_t maxForceTime = 0;
-uint8_t burnTime = 0;
+uint16_t maxForceTime = 0;
+uint16_t burnTime = 0;
 long forceRead = 0;		//unit in g
 
 //add decimal point '.' to a u16 num in 1/100 scale
@@ -108,6 +110,17 @@ void setup()
   u8g2.clearBuffer();
   u8g2.setFont(FONT_BIG);
   u8g2.drawStr(7,32,"Rocket Engine Tester");
+  
+  //power up with key down will enter slow sample mode for long working time engine.
+  //20Hz sample rate for 5 seconds.
+  if(digitalRead(KEY) == LOW)
+  {
+    u8g2.drawStr(7,52,"in Low Sample Rate");
+    //over write sample params
+    sample_cycle = 50;
+    sample_rate = 20;
+    time_scale = 5;
+  }
   u8g2.sendBuffer();
 
   HX711_CH0.begin();					//get zero point
@@ -137,6 +150,7 @@ void loop()
     delay(25);
   }while( forceRead < 10 );//too small will make the system irritability, it could be larger
   
+  previous_millis_sample = millis();//it's important to give it a init value
   //get 100 samples in 2 seconds
   while(i < 100)
   {
@@ -162,9 +176,9 @@ void loop()
     
   avgForce = impulse/burnTime; //get average force before normalizing
   
-  impulse /= 50;//50 samples in one second
-  maxForceTime *= 2;//ticks every 0.02s, 10th tick is 0.2s
-  burnTime *= 2;
+  impulse /= sample_rate;//50 samples in one second
+  maxForceTime *= time_scale;//ticks every 0.02s, 10th tick is 0.2s
+  burnTime *= time_scale;
   
   /*
   for(i=0;i<100;i++)
@@ -187,10 +201,23 @@ void loop()
     u8g2.drawLine(zero_point_x, zero_point_y, zero_point_x, zero_point_y - 55); //y axis
     u8g2.drawLine(zero_point_x - 3, zero_point_y - 25, zero_point_x, zero_point_y - 25); 
     u8g2.drawLine(zero_point_x - 3, zero_point_y - 50, zero_point_x, zero_point_y - 50); 
+
     
     u8g2.drawLine(zero_point_x, zero_point_y, zero_point_x + 105, zero_point_y);//x axis
-    u8g2.drawLine(zero_point_x + 50, zero_point_y, zero_point_x + 50, zero_point_y + 3);
-    u8g2.drawLine(zero_point_x + 100, zero_point_y, zero_point_x + 100, zero_point_y + 3);
+    if(sample_rate == 50)
+    {
+      u8g2.drawLine(zero_point_x + 50, zero_point_y, zero_point_x + 50, zero_point_y + 3);
+      u8g2.drawLine(zero_point_x + 100, zero_point_y, zero_point_x + 100, zero_point_y + 3);
+    }
+    else
+    {
+      u8g2.drawLine(zero_point_x + 20, zero_point_y, zero_point_x + 20, zero_point_y + 3);
+      u8g2.drawLine(zero_point_x + 40, zero_point_y, zero_point_x + 40, zero_point_y + 3);
+      u8g2.drawLine(zero_point_x + 60, zero_point_y, zero_point_x + 60, zero_point_y + 3);
+      u8g2.drawLine(zero_point_x + 80, zero_point_y, zero_point_x + 80, zero_point_y + 3);
+      u8g2.drawLine(zero_point_x + 100, zero_point_y, zero_point_x + 100, zero_point_y + 3);
+    }
+    
     //draw the cruve
     for(x=0; x < 100; x++)
     {
