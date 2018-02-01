@@ -84,28 +84,6 @@ void setup()
   delay(100);
   
   //Serial.begin(9600);//disable serial could save some ram
-/*
-  
-  
-  //power-up while key down, it'll enter scale mode for calibration
-  if(digitalRead(KEY) == LOW)
-  {
-    u8g2.clearBuffer();
-    u8g2.setFont(FONT_BIG);
-    u8g2.drawStr(7,32,"Serial Scale");
-    u8g2.sendBuffer();
-    HX711_CH0.begin();
-    delay(3000);
-    HX711_CH0.begin();		
-    //push button could jump out the serial scale
-    while(digitalRead(KEY) == HIGH){
-      forceRead = HX711_CH0.Get_Weight();
-      Serial.print(forceRead);
-      Serial.println(" g");
-      delay(500);  
-    }
-  }
-  */
   
   u8g2.clearBuffer();
   u8g2.setFont(FONT_BIG);
